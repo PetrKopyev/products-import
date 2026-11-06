@@ -89,7 +89,11 @@ final class MessengerFactory
         /** @var class-string $factoryClass */
         $factoryClass = 'Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpTransportFactory';
 
-        return (new $factoryClass())->createTransport($dsn, []);
+        return (new $factoryClass())->createTransport(
+            $dsn,
+            [],
+            new \Symfony\Component\Messenger\Transport\Serialization\PhpSerializer(),
+        );
     }
 }
 

@@ -11,7 +11,8 @@ RUN composer install \
     --no-scripts \
     --no-interaction \
     --prefer-dist \
-    --ignore-platform-req=ext-amqp
+    --ignore-platform-req=ext-amqp \
+    --ignore-platform-req=ext-gd
 
 # ---- runtime: php-fpm ----
 FROM php:8.3-fpm-alpine AS runtime
@@ -21,6 +22,13 @@ RUN apk add --no-cache \
         icu-dev \
         libzip-dev \
         libpng-dev \
+        rabbitmq-c-dev \
+    && apk add --no-cache --virtual .build-deps \
+        autoconf \
+        gcc \
+        g++ \
+        make \
+        linux-headers \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql \
         pgsql \
@@ -30,7 +38,8 @@ RUN apk add --no-cache \
         opcache \
     && pecl install amqp \
     && docker-php-ext-enable amqp \
-    && rm -rf /tmp/pear
+    && apk del .build-deps \
+    && rm -rf /tmp/pear /var/cache/apk/*
 
 WORKDIR /var/www
 

@@ -37,7 +37,7 @@ final class ImportService
 
         try {
             $this->assertFileAllowed($filePath);
-            $rows = $this->parser->parse($filePath);
+            $result = $this->parser->parse($filePath);
         } catch (Throwable $e) {
             $job->markFailed($e->getMessage());
             $this->entityManager->flush();
@@ -45,12 +45,18 @@ final class ImportService
             return ['rows' => 0, 'created' => 0, 'updated' => 0, 'warnings' => []];
         }
 
-        $job->setTotal(\count($rows));
+        $job->setTotal(\count($result->rows) + \count($result->errors));
         $this->entityManager->flush();
 
-        $stats = ['rows' => \count($rows), 'created' => 0, 'updated' => 0, 'warnings' => []];
+        $stats = ['rows' => \count($result->rows), 'created' => 0, 'updated' => 0, 'warnings' => []];
 
-        foreach ($rows as $row) {
+        // Невалидные строки файла — в отчёт, импорт продолжается
+        foreach ($result->errors as $error) {
+            $job->addError($error->rowNumber, $error->externalCode, $error->messages);
+            $job->incrementProcessed();
+        }
+
+        foreach ($result->rows as $row) {
             try {
                 $outcome = $this->importRow($row, $job);
                 $stats[$outcome]++;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit;
 
-use App\Service\InvalidRowException;
 use App\Service\XlsxParser;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
@@ -18,9 +17,11 @@ final class XlsxParserTest extends TestCase
     public function testParseRealFixture(): void
     {
         $parser = new XlsxParser();
-        $rows = $parser->parse(self::FIXTURE);
+        $result = $parser->parse(self::FIXTURE);
+        $rows = $result->rows;
 
         self::assertCount(40, $rows);
+        self::assertCount(0, $result->errors);
 
         $first = $rows[0];
         self::assertSame(2, $first->rowNumber);
@@ -38,7 +39,7 @@ final class XlsxParserTest extends TestCase
     public function testEmptyAttributeSkipped(): void
     {
         $parser = new XlsxParser();
-        $rows = $parser->parse(self::FIXTURE);
+        $rows = $parser->parse(self::FIXTURE)->rows;
 
         // «Доп. поле: seo h1» пуст во всём файле → в атрибуты не попадает
         foreach ($rows as $row) {
@@ -46,21 +47,25 @@ final class XlsxParserTest extends TestCase
         }
     }
 
-    public function testInvalidRowThrows(): void
+    public function testInvalidRowCollectedNotThrown(): void
     {
         $path = $this->makeXlsx([
             ['Внешний код', 'Наименование', 'Цена: Цена продажи'],
             ['CODE-1', 'Товар без цены', ''],
+            ['CODE-2', 'Валидный товар', '1200,00'],
         ]);
 
         $parser = new XlsxParser();
 
         try {
-            $parser->parse($path);
-            self::fail('Ожидался InvalidRowException');
-        } catch (InvalidRowException $e) {
-            self::assertSame(2, $e->rowNumber);
-            self::assertNotEmpty($e->messages);
+            $result = $parser->parse($path);
+
+            self::assertCount(1, $result->rows);
+            self::assertSame('CODE-2', $result->rows[0]->externalCode);
+            self::assertCount(1, $result->errors);
+            self::assertSame(2, $result->errors[0]->rowNumber);
+            self::assertSame('CODE-1', $result->errors[0]->externalCode);
+            self::assertNotEmpty($result->errors[0]->messages);
         } finally {
             unlink($path);
         }

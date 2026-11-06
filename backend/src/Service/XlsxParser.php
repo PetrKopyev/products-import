@@ -47,6 +47,36 @@ final class InvalidRowException extends RuntimeException
 }
 
 /**
+ * Невалидная строка файла: уходит в отчёт об ошибках импорта.
+ */
+final class InvalidRow
+{
+    /** @param array<string> $messages */
+    public function __construct(
+        public readonly int $rowNumber,
+        public readonly ?string $externalCode,
+        public readonly array $messages,
+    ) {
+    }
+}
+
+/**
+ * Результат парсинга: валидные строки + ошибки по невалидным.
+ */
+final class ParseResult
+{
+    /**
+     * @param array<ProductRow> $rows
+     * @param array<InvalidRow> $errors
+     */
+    public function __construct(
+        public readonly array $rows,
+        public readonly array $errors,
+    ) {
+    }
+}
+
+/**
  * Парсинг .xlsx в DTO по заголовкам колонок.
  *
  * Ожидаемые колонки: «Внешний код», «Наименование», «Описание»,
@@ -63,8 +93,18 @@ final class XlsxParser
     private const ATTRIBUTE_PREFIX = 'Доп. поле: ';
     private const IMAGE_COLUMN = 'Доп. поле: Ссылки на фото';
 
-    /** @return array<ProductRow> */
-    public function parse(string $filePath): array
+    /**
+     * Парсинг .xlsx в DTO по заголовкам колонок.
+     *
+     * Ожидаемые колонки: «Внешний код», «Наименование», «Описание»,
+     * «Цена: Цена продажи», «Закупочная цена», любые «Доп. поле: *»
+     * (кроме «Ссылки на фото» — это источник изображений).
+     *
+     * Невалидные строки не прерывают парсинг — собираются в ParseResult->errors
+     * (фатальные проблемы файла, например отсутствие обязательных колонок, по-прежнему
+     * бросают RuntimeException).
+     */
+    public function parse(string $filePath): ParseResult
     {
         if (!is_file($filePath)) {
             throw new RuntimeException(sprintf('Файл не найден: %s', $filePath));
@@ -79,16 +119,27 @@ final class XlsxParser
             $columnMap = $this->buildColumnMap($sheet);
 
             $rows = [];
+            $errors = [];
             $highestRow = $sheet->getHighestDataRow();
 
             for ($rowIndex = 2; $rowIndex <= $highestRow; $rowIndex++) {
-                $row = $this->parseRow($sheet, $columnMap, $rowIndex);
-                if ($row !== null) {
-                    $rows[] = $row;
+                try {
+                    $row = $this->parseRow($sheet, $columnMap, $rowIndex);
+                    if ($row !== null) {
+                        $rows[] = $row;
+                    }
+                } catch (InvalidRowException $e) {
+                    $code = $this->readString($sheet, $columnMap->externalCode, $e->rowNumber);
+
+                    $errors[] = new InvalidRow(
+                        rowNumber: $e->rowNumber,
+                        externalCode: $code !== '' ? $code : null,
+                        messages: $e->messages,
+                    );
                 }
             }
 
-            return $rows;
+            return new ParseResult($rows, $errors);
         } finally {
             $spreadsheet->disconnectWorksheets();
         }

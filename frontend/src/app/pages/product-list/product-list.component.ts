@@ -85,7 +85,7 @@ import { Product } from '../../models/product.model';
                 }
               <table mat-table [dataSource]="vm.products" class="full-width" data-cy="products-table">
                 <ng-container matColumnDef="image">
-                  <th mat-header-cell *matHeaderCellDef></th>
+                  <th mat-header-cell *matHeaderCellDef class="col-image"></th>
                   <td mat-cell *matCellDef="let product">
                     @if (imageSrc(product); as src) {
                       <img class="thumb" [src]="src" [alt]="product.name" />
@@ -96,17 +96,17 @@ import { Product } from '../../models/product.model';
                 </ng-container>
                 <ng-container matColumnDef="name">
                   <th mat-header-cell *matHeaderCellDef>Наименование</th>
-                  <td mat-cell *matCellDef="let product">{{ product.name }}</td>
+                  <td mat-cell *matCellDef="let product" class="name-cell" [title]="product.name">{{ product.name }}</td>
                 </ng-container>
                 <ng-container matColumnDef="price">
-                  <th mat-header-cell *matHeaderCellDef class="sortable-header" (click)="toggleSort()">
+                  <th mat-header-cell *matHeaderCellDef class="sortable-header col-price" (click)="toggleSort()">
                     Цена
                     <mat-icon class="sort-icon">{{ sortIcon() }}</mat-icon>
                   </th>
                   <td mat-cell *matCellDef="let product" class="price-cell">{{ product.price | number: '1.2-2' }} ₽</td>
                 </ng-container>
                 <ng-container matColumnDef="discount">
-                  <th mat-header-cell *matHeaderCellDef class="col-center">Скидка</th>
+                  <th mat-header-cell *matHeaderCellDef class="col-center col-discount">Скидка</th>
                   <td mat-cell *matCellDef="let product" class="col-center">
                     @if (product.discount !== null) {
                       <span class="discount-badge">{{ product.discount | number: '1.0-0' }}%</span>
@@ -149,6 +149,25 @@ import { Product } from '../../models/product.model';
         border: 1px solid #dde4ea;
         display: block;
         margin: 6px 0;
+      }
+      /* Фиксированная сетка — колонки не «прыгают» при смене данных */
+      table {
+        table-layout: fixed;
+      }
+      .col-image {
+        width: 84px;
+      }
+      .col-price {
+        width: 170px;
+      }
+      .col-discount {
+        width: 130px;
+      }
+      .name-cell {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 16px;
       }
       .thumb-placeholder {
         display: flex;

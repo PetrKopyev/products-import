@@ -179,4 +179,64 @@ final class ImportApiTest extends TestCase
         self::assertSame('completed', $job['status']);
         self::assertSame(40, $job['total']);
     }
+
+    public function testInvalidRowDoesNotBreakImport(): void
+    {
+        $path = $this->makeXlsx([
+            ['Внешний код', 'Наименование', 'Цена: Цена продажи'],
+            ['MIX-1', 'Валидный товар', '1500,00'],
+            ['MIX-2', '', 'не-число'],
+        ]);
+
+        try {
+            $upload = $this->uploadRequest(
+                '/api/import',
+                $path,
+                'mixed.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ['Authorization' => 'Bearer ' . $this->token],
+            );
+            self::assertSame(202, $upload->getStatusCode(), (string) $upload->getBody());
+
+            $jobId = (int) $this->decode($upload)['jobId'];
+
+            $status = $this->jsonRequest('GET', '/api/import/' . $jobId, null, [
+                'Authorization' => 'Bearer ' . $this->token,
+            ]);
+
+            $job = $this->decode($status)['data'];
+            self::assertSame('completed', $job['status']);
+            self::assertSame(2, $job['total']);
+            self::assertSame(2, $job['processed']);
+            self::assertCount(1, $job['errors']);
+            self::assertSame('MIX-2', $job['errors'][0]['externalCode']);
+
+            $list = $this->jsonRequest('GET', '/api/products?name=' . urlencode('Валидный товар'), null, [
+                'Authorization' => 'Bearer ' . $this->token,
+            ]);
+            self::assertSame(1, $this->decode($list)['meta']['total']);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    /**
+     * @param array<array<string>> $rows
+     */
+    private function makeXlsx(array $rows): string
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        foreach ($rows as $r => $row) {
+            foreach ($row as $c => $value) {
+                $sheet->setCellValue([$c + 1, $r + 1], $value);
+            }
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'xlsx-api-test-') . '.xlsx';
+        (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet))->save($path);
+        $spreadsheet->disconnectWorksheets();
+
+        return $path;
+    }
 }

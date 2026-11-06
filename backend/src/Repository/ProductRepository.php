@@ -40,17 +40,24 @@ final class ProductRepository
     }
 
     /**
-     * Серверная пагинация + фильтрация по name и диапазону цены.
+     * Серверная пагинация + фильтрация по name и диапазону цены + сортировка.
      *
-     * @param array{name?: string, price_min?: float|null, price_max?: float|null} $filters
+     * @param array{name?: string, price_min?: float|null, price_max?: float|null, sort?: string} $filters
      * @return array{items: array<Product>, total: int}
      */
     public function findPaginated(int $page, int $limit, array $filters): array
     {
         $qb = $this->em->createQueryBuilder()
             ->select('p')
-            ->from(Product::class, 'p')
-            ->orderBy('p.id', 'ASC');
+            ->from(Product::class, 'p');
+
+        if (($filters['sort'] ?? '') === 'price_asc') {
+            $qb->orderBy('p.price', 'ASC')->addOrderBy('p.id', 'ASC');
+        } elseif (($filters['sort'] ?? '') === 'price_desc') {
+            $qb->orderBy('p.price', 'DESC')->addOrderBy('p.id', 'ASC');
+        } else {
+            $qb->orderBy('p.id', 'ASC');
+        }
 
         if (isset($filters['name']) && $filters['name'] !== '') {
             $qb->andWhere('LOWER(p.name) LIKE LOWER(:name)')

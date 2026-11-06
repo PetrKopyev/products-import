@@ -175,6 +175,10 @@ paths:
         - name: price_max
           in: query
           schema: { type: number }
+        - name: sort
+          in: query
+          description: 'Сортировка: price_asc или price_desc (по умолчанию — по id)'
+          schema: { type: string, enum: [price_asc, price_desc] }
       responses:
         '200':
           description: Страница товаров

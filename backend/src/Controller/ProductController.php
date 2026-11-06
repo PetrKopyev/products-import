@@ -30,6 +30,12 @@ final class ProductController
             'price_max' => $this->floatParam($params, 'price_max'),
         ];
 
+        $sort = $this->stringParam($params, 'sort');
+        if (!\in_array($sort, ['', 'price_asc', 'price_desc'], true)) {
+            throw new ApiException('Параметр sort должен быть одним из: price_asc, price_desc', 422);
+        }
+        $filters['sort'] = $sort;
+
         if ($filters['price_min'] !== null && $filters['price_max'] !== null
             && $filters['price_min'] > $filters['price_max']) {
             throw new ApiException('price_min не может быть больше price_max', 422);

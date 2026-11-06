@@ -227,11 +227,20 @@ tr.mat-mdc-row:hover {
   margin-bottom: 16px;
 }
 
+/* Фильтры — более скруглённые поля */
+.filter-form .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-shape: 14px;
+}
+
 .clickable-row {
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease;
 }
 
 .clickable-row:hover {
+  transform: scale(1.01);
   background: rgba(48, 175, 184, 0.07);
 }
 

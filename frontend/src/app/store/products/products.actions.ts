@@ -9,6 +9,7 @@ export const loadProducts = createAction(
     name?: string;
     priceMin?: number | null;
     priceMax?: number | null;
+    sort?: 'price_asc' | 'price_desc' | '';
   }>(),
 );
 

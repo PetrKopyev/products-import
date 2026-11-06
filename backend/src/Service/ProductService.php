@@ -18,7 +18,7 @@ final class ProductService
     }
 
     /**
-     * @param array{name?: string, price_min?: float|null, price_max?: float|null} $filters
+     * @param array{name?: string, price_min?: float|null, price_max?: float|null, sort?: string} $filters
      * @return array{data: array<array<string, mixed>>, meta: array{page: int, limit: int, total: int, totalPages: int}}
      */
     public function list(int $page, int $limit, array $filters): array

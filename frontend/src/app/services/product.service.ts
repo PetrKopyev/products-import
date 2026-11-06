@@ -9,6 +9,7 @@ export interface ProductQuery {
   name?: string;
   priceMin?: number | null;
   priceMax?: number | null;
+  sort?: 'price_asc' | 'price_desc' | '';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,6 +29,9 @@ export class ProductService {
     }
     if (query.priceMax !== null && query.priceMax !== undefined) {
       params = params.set('price_max', String(query.priceMax));
+    }
+    if (query.sort) {
+      params = params.set('sort', query.sort);
     }
 
     return this.http.get<ProductListResponse>('/api/products', { params });

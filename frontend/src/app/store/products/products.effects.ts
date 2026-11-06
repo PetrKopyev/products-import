@@ -17,6 +17,7 @@ export class ProductsEffects {
             name: action.name,
             priceMin: action.priceMin,
             priceMax: action.priceMax,
+            sort: action.sort,
           })
           .pipe(
             map((response) =>

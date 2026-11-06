@@ -78,6 +78,8 @@ import { Product } from '../../models/product.model';
                   <td mat-cell *matCellDef="let product">
                     @if (imageSrc(product); as src) {
                       <img class="thumb" [src]="src" [alt]="product.name" />
+                    } @else {
+                      <div class="thumb thumb-placeholder"><mat-icon>image</mat-icon></div>
                     }
                   </td>
                 </ng-container>
@@ -86,12 +88,15 @@ import { Product } from '../../models/product.model';
                   <td mat-cell *matCellDef="let product">{{ product.name }}</td>
                 </ng-container>
                 <ng-container matColumnDef="price">
-                  <th mat-header-cell *matHeaderCellDef>Цена</th>
+                  <th mat-header-cell *matHeaderCellDef class="sortable-header" (click)="toggleSort()">
+                    Цена
+                    <mat-icon class="sort-icon">{{ sortIcon() }}</mat-icon>
+                  </th>
                   <td mat-cell *matCellDef="let product" class="price-cell">{{ product.price | number: '1.2-2' }} ₽</td>
                 </ng-container>
                 <ng-container matColumnDef="discount">
-                  <th mat-header-cell *matHeaderCellDef>Скидка</th>
-                  <td mat-cell *matCellDef="let product">
+                  <th mat-header-cell *matHeaderCellDef class="col-center">Скидка</th>
+                  <td mat-cell *matCellDef="let product" class="col-center">
                     @if (product.discount !== null) {
                       <span class="discount-badge">{{ product.discount | number: '1.0-0' }}%</span>
                     } @else {
@@ -133,8 +138,35 @@ import { Product } from '../../models/product.model';
         display: block;
         margin: 6px 0;
       }
+      .thumb-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef3f6;
+        border-style: dashed;
+        color: #9aa7b3;
+      }
       .price-cell {
         font-weight: 600;
+      }
+      .col-center {
+        text-align: center;
+      }
+      .sortable-header {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .sortable-header:hover {
+        color: #0e7c86;
+      }
+      .sort-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        vertical-align: -2px;
+        margin-left: 2px;
+        color: #30afb8;
       }
       .loading-box {
         display: flex;
@@ -146,6 +178,8 @@ import { Product } from '../../models/product.model';
 })
 export class ProductListComponent implements OnInit, OnDestroy {
   protected readonly displayedColumns = ['image', 'name', 'price', 'discount'];
+
+  protected sort: 'price_asc' | 'price_desc' | '' = '';
 
   protected readonly vm$ = combineLatest({
     products: this.store.select(selectAllProducts),
@@ -196,8 +230,24 @@ export class ProductListComponent implements OnInit, OnDestroy {
         name: name?.trim() ? name.trim() : undefined,
         priceMin: this.validNumber(priceMin),
         priceMax: this.validNumber(priceMax),
+        sort: this.sort,
       }),
     );
+  }
+
+  toggleSort(): void {
+    this.sort = this.sort === '' ? 'price_asc' : this.sort === 'price_asc' ? 'price_desc' : '';
+    this.reload(1);
+  }
+
+  sortIcon(): string {
+    if (this.sort === 'price_asc') {
+      return 'arrow_upward';
+    }
+    if (this.sort === 'price_desc') {
+      return 'arrow_downward';
+    }
+    return 'unfold_more';
   }
 
   onPage(event: PageEvent): void {

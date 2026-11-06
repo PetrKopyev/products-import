@@ -30,6 +30,12 @@ import { AuthService } from './services/auth.service';
   `,
   styles: [
     `
+      mat-toolbar {
+        gap: 8px;
+      }
+      mat-toolbar .spacer {
+        margin-right: 8px;
+      }
       .spacer {
         flex: 1 1 auto;
       }

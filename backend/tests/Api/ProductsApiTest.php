@@ -92,6 +92,40 @@ final class ProductsApiTest extends TestCase
         self::assertSame(422, $response->getStatusCode());
     }
 
+    public function testSortByPrice(): void
+    {
+        $asc = $this->jsonRequest('GET', '/api/products?' . http_build_query([
+            'sort' => 'price_asc',
+            'limit' => 100,
+        ]), null, ['Authorization' => 'Bearer ' . $this->token]);
+
+        $payload = $this->decode($asc);
+        self::assertSame(
+            [1000.0, 1500.0, 2500.0],
+            array_map(static fn (array $p): float => (float) $p['price'], $payload['data']),
+        );
+
+        $desc = $this->jsonRequest('GET', '/api/products?' . http_build_query([
+            'sort' => 'price_desc',
+            'limit' => 100,
+        ]), null, ['Authorization' => 'Bearer ' . $this->token]);
+
+        $payloadDesc = $this->decode($desc);
+        self::assertSame(
+            [2500.0, 1500.0, 1000.0],
+            array_map(static fn (array $p): float => (float) $p['price'], $payloadDesc['data']),
+        );
+    }
+
+    public function testInvalidSort(): void
+    {
+        $response = $this->jsonRequest('GET', '/api/products?sort=name_asc', null, [
+            'Authorization' => 'Bearer ' . $this->token,
+        ]);
+
+        self::assertSame(422, $response->getStatusCode());
+    }
+
     public function testDetailReturnsFullProduct(): void
     {
         $repository = new ProductRepository(self::$em);

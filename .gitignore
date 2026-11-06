@@ -1,0 +1,21 @@
+# Environment
+.env
+
+# Backend
+backend/vendor/
+backend/.phpunit.cache/
+backend/.php-cs-fixer.cache
+backend/phpstan.cache/
+backend/storage/
+backend/composer.phar
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.log

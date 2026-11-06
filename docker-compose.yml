@@ -1,0 +1,75 @@
+services:
+  app:
+    build:
+      context: ./backend
+      target: runtime
+    env_file: .env
+    environment:
+      DATABASE_URL: pgsql://app:app_secret@db:5432/products
+      MESSENGER_TRANSPORT_DSN: amqp://guest:guest@rabbitmq:5672/%2f/messages
+      IMAGE_STORAGE_PATH: /var/www/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - app-storage:/var/www/storage
+
+  worker:
+    build:
+      context: ./backend
+      target: runtime
+    env_file: .env
+    environment:
+      DATABASE_URL: pgsql://app:app_secret@db:5432/products
+      MESSENGER_TRANSPORT_DSN: amqp://guest:guest@rabbitmq:5672/%2f/messages
+      IMAGE_STORAGE_PATH: /var/www/storage
+    command: ["php", "bin/console.php", "messenger:consume"]
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - app-storage:/var/www/storage
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_secret
+      POSTGRES_DB: products
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d products"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    ports:
+      - "15672:15672" # management UI, guest/guest
+
+  nginx:
+    build:
+      context: ./frontend
+      target: runtime
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      - app
+    volumes:
+      - app-storage:/var/www/storage:ro
+
+volumes:
+  db-data:
+  app-storage:

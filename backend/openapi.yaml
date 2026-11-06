@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Products Import API
+  version: 1.0.0
+  description: |
+    Импорт товаров из .xlsx (асинхронно через RabbitMQ), список товаров
+    с серверной пагинацией и фильтрацией, карточка товара, JWT-аутентификация.
+
+servers:
+  - url: /
+
+tags:
+  - name: auth
+  - name: import
+  - name: products
+  - name: system
+
+paths:
+  /api/health:
+    get:
+      tags: [system]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Сервис и БД работают
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503':
+          description: База данных недоступна
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Вход (email + password) → JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: admin@example.com }
+                password: { type: string, example: admin123 }
+      responses:
+        '200':
+          description: Токен выдан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Текущий пользователь по токену
+      responses:
+        '200':
+          description: Пользователь
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/import:
+    post:
+      tags: [import]
+      summary: Загрузка .xlsx и постановка задачи импорта в очередь
+      description: |
+        Файл валидируется (расширение, MIME, размер), сохраняется на диск,
+        создаётся задача импорта и сообщение уходит в RabbitMQ (Symfony Messenger).
+        Обработка асинхронна — статус опрашивать через `GET /api/import/{id}`.
+        Дубликаты по `external_code` обновляются (upsert).
+        Лимит: 5 запросов в минуту с одного IP.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: .xlsx файл с товарами
+      responses:
+        '202':
+          description: Задача создана и поставлена в очередь
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId: { type: integer, example: 1 }
+                  status: { type: string, example: pending }
+                  statusUrl: { type: string, example: /api/import/1 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429':
+          description: Превышен rate limit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/import/{id}:
+    get:
+      tags: [import]
+      summary: Статус задачи импорта (прогресс + отчёт об ошибках по строкам)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Статус задачи
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ImportJob' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/products:
+    get:
+      tags: [products]
+      summary: Список товаров (серверная пагинация, поиск и фильтры)
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: name
+          in: query
+          description: Поиск по наименованию (регистронезависимо, LIKE)
+          schema: { type: string }
+        - name: price_min
+          in: query
+          schema: { type: number }
+        - name: price_max
+          in: query
+          schema: { type: number }
+      responses:
+        '200':
+          description: Страница товаров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Product' }
+                  meta:
+                    type: object
+                    properties:
+                      page: { type: integer }
+                      limit: { type: integer }
+                      total: { type: integer }
+                      totalPages: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /api/products/{id}:
+    get:
+      tags: [products]
+      summary: Карточка товара (поля, атрибуты, изображения)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Товар
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Product' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Нет/невалидный токен
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationError:
+      description: Ошибка валидации входных данных
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: array
+          items: { type: string }
+    Health:
+      type: object
+      properties:
+        status: { type: string, enum: [ok, fail] }
+        db: { type: string, enum: [up, down] }
+        time: { type: string, format: date-time }
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+    ImportJob:
+      type: object
+      properties:
+        id: { type: integer }
+        status: { type: string, enum: [pending, processing, completed, failed] }
+        total: { type: integer, description: Всего строк в файле }
+        processed: { type: integer, description: Обработано строк }
+        errors:
+          type: array
+          description: Отчёт — ошибки по строкам (невалидные строки не прерывают импорт)
+          items:
+            type: object
+            properties:
+              row: { type: integer, description: Номер строки в xlsx }
+              externalCode: { type: string, nullable: true }
+              messages:
+                type: array
+                items: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ProductAttribute:
+      type: object
+      properties:
+        key: { type: string, example: Размер }
+        value: { type: string, example: 46(M) }
+    ProductImage:
+      type: object
+      properties:
+        id: { type: integer }
+        url: { type: string, description: Исходная ссылка из xlsx }
+        path: { type: string, nullable: true, description: Локальный файл (отдаётся по /images/{path}) }
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        externalCode: { type: string, example: 3UHfAid1jaMiwgBuNvnsf3 }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        price: { type: number, example: 1320.0 }
+        discount:
+          type: number
+          nullable: true
+          description: Скидка в %, вычисленная при импорте
+          example: 33.33
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        attributes:
+          type: array
+          items: { $ref: '#/components/schemas/ProductAttribute' }
+        images:
+          type: array
+          items: { $ref: '#/components/schemas/ProductImage' }
+
+security:
+  - bearerAuth: []

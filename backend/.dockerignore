@@ -1,0 +1,10 @@
+vendor/
+storage/
+.phpunit.cache/
+.php-cs-fixer.cache
+phpstan.cache/
+tests/
+fixtures/
+openapi.yaml
+Dockerfile
+.dockerignore

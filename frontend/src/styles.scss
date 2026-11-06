@@ -91,18 +91,54 @@ mat-card,
 .mat-mdc-unelevated-button {
   border-radius: 10px !important;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-.mat-mdc-unelevated-button.mat-primary,
-.mat-mdc-raised-button.mat-primary,
-.mat-mdc-flat-button.mat-primary {
+/* Primary — градиент Sherpa + белый текст (без явного color метка сливается с фоном) */
+.mat-mdc-unelevated-button.mat-primary:not(:disabled),
+.mat-mdc-raised-button.mat-primary:not(:disabled),
+.mat-mdc-flat-button.mat-primary:not(:disabled) {
   background: linear-gradient(135deg, #30afb8 0%, #38b0df 100%) !important;
+  color: #ffffff !important;
 }
 
-.mat-mdc-unelevated-button.mat-primary:hover,
-.mat-mdc-raised-button.mat-primary:hover,
-.mat-mdc-flat-button.mat-primary:hover {
+.mat-mdc-unelevated-button.mat-primary:not(:disabled):hover,
+.mat-mdc-raised-button.mat-primary:not(:disabled):hover,
+.mat-mdc-flat-button.mat-primary:not(:disabled):hover {
   background: linear-gradient(135deg, #2299a1 0%, #2ea3d4 100%) !important;
+  box-shadow: 0 4px 14px rgba(48, 175, 184, 0.35);
+}
+
+/* Accent — глубокий синий Sherpa */
+.mat-mdc-unelevated-button.mat-accent:not(:disabled),
+.mat-mdc-raised-button.mat-accent:not(:disabled),
+.mat-mdc-flat-button.mat-accent:not(:disabled) {
+  background: #006c97 !important;
+  color: #ffffff !important;
+}
+
+/* Disabled — плоский светлый, текст читаем */
+.mat-mdc-raised-button:disabled,
+.mat-mdc-flat-button:disabled,
+.mat-mdc-unelevated-button:disabled {
+  background: #e9edf1 !important;
+  color: rgba(49, 59, 72, 0.45) !important;
+  box-shadow: none !important;
+}
+
+/* Stroked / текстовые кнопки — контрастный фирменный текст */
+.mat-mdc-stroked-button:not(:disabled),
+.mat-mdc-button:not(:disabled) {
+  color: #0e7c86 !important;
+}
+
+.mat-mdc-stroked-button:not(:disabled) {
+  border-color: #a9dde1 !important;
+}
+
+.mat-mdc-stroked-button:not(:disabled):hover,
+.mat-mdc-button:not(:disabled):hover {
+  background: rgba(48, 175, 184, 0.08) !important;
 }
 
 /* Тулбар — белый, как шапка сайта */
@@ -134,6 +170,42 @@ mat-progress-bar {
 .mat-mdc-paginator {
   border-radius: 0 0 16px 16px;
   background: transparent;
+}
+
+/* Таблицы — лёгкая шапка, аккуратные строки */
+.mat-mdc-table {
+  background: transparent;
+}
+
+th.mat-mdc-header-cell {
+  color: rgba(76, 88, 103, 0.85);
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #dde4ea;
+}
+
+td.mat-mdc-cell {
+  border-bottom-color: #edf1f5;
+  color: #313b48;
+}
+
+tr.mat-mdc-row:hover {
+  background: rgba(48, 175, 184, 0.06);
+}
+
+/* Бейдж скидки — фирменный градиент */
+.discount-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #30afb8 0%, #38b0df 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Утилиты страниц */

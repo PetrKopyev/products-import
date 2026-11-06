@@ -3,7 +3,6 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -21,7 +20,6 @@ import { ImportService } from '../../services/import.service';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatTableModule,
@@ -51,9 +49,7 @@ import { ImportService } from '../../services/import.service';
                 <p class="price">
                   {{ product.price | number: '1.2-2' }} ₽
                   @if (product.discount !== null) {
-                    <mat-chip-set class="discount-chip">
-                      <mat-chip highlighted>скидка {{ product.discount | number: '1.2-2' }}%</mat-chip>
-                    </mat-chip-set>
+                    <span class="discount-badge">скидка {{ product.discount | number: '1.0-0' }}%</span>
                   }
                 </p>
                 @if (product.description) {
@@ -135,8 +131,9 @@ import { ImportService } from '../../services/import.service';
       }
       .product-images img {
         width: 100%;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        border: 1px solid #dde4ea;
+        box-shadow: 0 2px 10px rgba(49, 59, 72, 0.08);
       }
       .price {
         font-size: 28px;

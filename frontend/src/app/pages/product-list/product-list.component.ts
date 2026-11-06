@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -37,7 +36,6 @@ import { Product } from '../../models/product.model';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule,
     MatProgressSpinnerModule,
   ],
   template: `
@@ -89,15 +87,13 @@ import { Product } from '../../models/product.model';
                 </ng-container>
                 <ng-container matColumnDef="price">
                   <th mat-header-cell *matHeaderCellDef>Цена</th>
-                  <td mat-cell *matCellDef="let product">{{ product.price | number: '1.2-2' }} ₽</td>
+                  <td mat-cell *matCellDef="let product" class="price-cell">{{ product.price | number: '1.2-2' }} ₽</td>
                 </ng-container>
                 <ng-container matColumnDef="discount">
                   <th mat-header-cell *matHeaderCellDef>Скидка</th>
                   <td mat-cell *matCellDef="let product">
                     @if (product.discount !== null) {
-                      <mat-chip-set>
-                        <mat-chip highlighted>−{{ product.discount | number: '1.2-2' }}%</mat-chip>
-                      </mat-chip-set>
+                      <span class="discount-badge">{{ product.discount | number: '1.0-0' }}%</span>
                     } @else {
                       <span class="text-muted">—</span>
                     }
@@ -129,12 +125,16 @@ import { Product } from '../../models/product.model';
   styles: [
     `
       .thumb {
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         object-fit: cover;
-        border-radius: 4px;
+        border-radius: 10px;
+        border: 1px solid #dde4ea;
         display: block;
-        margin: 4px 0;
+        margin: 6px 0;
+      }
+      .price-cell {
+        font-weight: 600;
       }
       .loading-box {
         display: flex;

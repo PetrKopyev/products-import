@@ -1,4 +1,6 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, provideZoneChangeDetection } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeRu from '@angular/common/locales/ru';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -10,6 +12,8 @@ import { productsReducer } from './store/products/products.reducer';
 import { ProductsEffects } from './store/products/products.effects';
 import { authInterceptor } from './interceptors/auth.interceptor';
 
+registerLocaleData(localeRu);
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
@@ -18,5 +22,6 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideStore({ products: productsReducer }),
     provideEffects(ProductsEffects),
+    { provide: LOCALE_ID, useValue: 'ru' },
   ],
 };

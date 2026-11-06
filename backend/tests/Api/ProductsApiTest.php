@@ -34,11 +34,12 @@ final class ProductsApiTest extends TestCase
         self::assertSame(20, $payload['meta']['limit']);
         self::assertSame(1, $payload['meta']['totalPages']);
 
+        // По умолчанию новые товары первыми
         $first = $payload['data'][0];
-        self::assertArrayHasKey('externalCode', $first);
+        self::assertSame('API-3', $first['externalCode']);
         self::assertArrayHasKey('attributes', $first);
         self::assertArrayHasKey('images', $first);
-        self::assertEquals(1500.0, $first['price']);
+        self::assertEquals(2500.0, $first['price']);
     }
 
     public function testPaginationLimit(): void

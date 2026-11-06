@@ -82,7 +82,13 @@ final class ImportApiTest extends TestCase
         $listPayload = $this->decode($list);
         self::assertSame(40, $listPayload['meta']['total']);
 
-        $first = $listPayload['data'][0];
+        // Порядок по умолчанию — новые первыми, ищем товар по коду
+        $byCode = [];
+        foreach ($listPayload['data'] as $item) {
+            $byCode[$item['externalCode']] = $item;
+        }
+
+        $first = $byCode['3UHfAid1jaMiwgBuNvnsf3'];
         self::assertSame('3UHfAid1jaMiwgBuNvnsf3', $first['externalCode']);
         self::assertSame('Бермуды мужские, Grigio/Verde, OMSA, 46(M), РОССИЯ', $first['name']);
         self::assertEquals(1320.0, $first['price']);

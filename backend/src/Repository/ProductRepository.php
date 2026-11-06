@@ -56,7 +56,8 @@ final class ProductRepository
         } elseif (($filters['sort'] ?? '') === 'price_desc') {
             $qb->orderBy('p.price', 'DESC')->addOrderBy('p.id', 'ASC');
         } else {
-            $qb->orderBy('p.id', 'ASC');
+            // По умолчанию — новые товары первыми (свежие импорты видно сразу)
+            $qb->orderBy('p.id', 'DESC');
         }
 
         if (isset($filters['name']) && $filters['name'] !== '') {

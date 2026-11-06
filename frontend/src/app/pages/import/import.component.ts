@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -45,6 +45,7 @@ import { ImportService } from '../../services/import.service';
             class="drop-zone"
             [class.drop-zone-active]="dragOver"
             [class.drop-zone-disabled]="isRunning"
+            [class.has-file]="selectedFile !== null"
             (click)="!isRunning && fileInput.click()"
             (keydown.enter)="!isRunning && fileInput.click()"
             (dragover)="onDragOver($event)"
@@ -54,11 +55,21 @@ import { ImportService } from '../../services/import.service';
             tabindex="0"
             data-cy="choose-file"
           >
-            <div class="drop-icon"><mat-icon>upload_file</mat-icon></div>
             @if (selectedFile) {
+              <button
+                class="drop-remove"
+                mat-icon-button
+                type="button"
+                aria-label="Убрать выбранный файл"
+                (click)="clearFile($event)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+              <div class="drop-icon drop-icon-ok"><mat-icon>check</mat-icon></div>
               <p class="drop-title">{{ selectedFile.name }}</p>
-              <p class="drop-hint">{{ formatSize(selectedFile.size) }} · нажмите, чтобы выбрать другой файл</p>
+              <p class="drop-hint">Файл выбран ({{ formatSize(selectedFile.size) }}) — нажмите «Загрузить и импортировать»</p>
             } @else {
+              <div class="drop-icon"><mat-icon>upload_file</mat-icon></div>
               <p class="drop-title">Перетащите .xlsx файл сюда</p>
               <p class="drop-hint">или нажмите, чтобы выбрать на компьютере</p>
             }
@@ -160,6 +171,29 @@ import { ImportService } from '../../services/import.service';
       .drop-zone-active {
         border-color: #30afb8;
         background: #eff8f9;
+      }
+      /* Файл выбран — явное отличное состояние */
+      .drop-zone.has-file {
+        border-style: solid;
+        border-color: #30afb8;
+        background: linear-gradient(135deg, #eaf8f6 0%, #e6f4fb 100%);
+        cursor: default;
+      }
+      .drop-zone.has-file:hover {
+        background: linear-gradient(135deg, #e2f4f1 0%, #dceffa 100%);
+      }
+      .drop-remove {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        color: #4c5867;
+      }
+      .drop-zone {
+        position: relative;
+      }
+      .drop-icon-ok {
+        background: linear-gradient(135deg, #34b37a 0%, #2e9d6c 100%);
+        box-shadow: 0 6px 16px rgba(52, 179, 122, 0.35);
       }
       .drop-zone-disabled {
         opacity: 0.6;
@@ -294,6 +328,8 @@ export class ImportComponent {
   protected dragOver = false;
   protected readonly errorColumns = ['row', 'externalCode', 'messages'];
 
+  @ViewChild('fileInput') private readonly fileInput?: ElementRef<HTMLInputElement>;
+
   private pollSubscription: Subscription | null = null;
 
   constructor(
@@ -322,6 +358,14 @@ export class ImportComponent {
       this.selectedFile = file;
     } else if (file) {
       this.snackBar.open('Нужен файл с расширением .xlsx', 'Закрыть', { duration: 4000 });
+    }
+  }
+
+  clearFile(event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedFile = null;
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
     }
   }
 

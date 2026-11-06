@@ -8,8 +8,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
-import { map, switchMap, tap } from 'rxjs';
+import { map, switchMap, takeWhile, tap, interval, of } from 'rxjs';
 import { Product, ProductImage } from '../../models/product.model';
+import { ImportJob } from '../../models/import.model';
 import { ProductService } from '../../services/product.service';
 import { ImportService } from '../../services/import.service';
 
@@ -402,8 +403,22 @@ export class ProductDetailComponent {
     map((response) => response.data),
   );
 
-  /** Статус последней задачи импорта (прогресс + отчёт об ошибках) */
-  protected readonly job$ = this.importService.getLatest();
+  /**
+   * Статус последней задачи импорта (прогресс + отчёт об ошибках).
+   * Пока задача в работе — polling каждые 1,5 с до финального статуса (ТЗ).
+   */
+  protected readonly job$ = this.importService.getLatest().pipe(
+    switchMap((job) => {
+      if (!this.inProgress(job)) {
+        return of(job);
+      }
+
+      return interval(1500).pipe(
+        switchMap(() => this.importService.getLatest()),
+        takeWhile((j) => this.inProgress(j), true),
+      );
+    }),
+  );
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -474,5 +489,9 @@ export class ProductDetailComponent {
       failed: 'ошибка',
     };
     return labels[status] ?? status;
+  }
+
+  private inProgress(job: ImportJob | null): boolean {
+    return job !== null && (job.status === 'pending' || job.status === 'processing');
   }
 }

@@ -152,4 +152,31 @@ final class ImportApiTest extends TestCase
 
         self::assertSame(404, $response->getStatusCode());
     }
+
+    public function testImportLatest(): void
+    {
+        $response = $this->jsonRequest('GET', '/api/import/latest', null, [
+            'Authorization' => 'Bearer ' . $this->token,
+        ]);
+
+        // После setUp задач нет — 404
+        self::assertSame(404, $response->getStatusCode());
+
+        $this->uploadRequest(
+            '/api/import',
+            self::FIXTURE,
+            'import-example.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ['Authorization' => 'Bearer ' . $this->token],
+        );
+
+        $latest = $this->jsonRequest('GET', '/api/import/latest', null, [
+            'Authorization' => 'Bearer ' . $this->token,
+        ]);
+        self::assertSame(200, $latest->getStatusCode());
+
+        $job = $this->decode($latest)['data'];
+        self::assertSame('completed', $job['status']);
+        self::assertSame(40, $job['total']);
+    }
 }

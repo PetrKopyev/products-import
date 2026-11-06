@@ -23,6 +23,12 @@ final class ImportJobRepository
         return $this->repository->find($id);
     }
 
+    public function findLatest(): ?ImportJob
+    {
+        /** @var ImportJob|null */
+        return $this->repository->findOneBy([], ['id' => 'DESC']);
+    }
+
     public function save(ImportJob $job): void
     {
         $this->em->persist($job);

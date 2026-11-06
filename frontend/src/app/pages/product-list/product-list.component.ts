@@ -12,7 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { combineLatest, debounceTime, distinctUntilChanged, map, Subject, take, takeUntil } from 'rxjs';
+import { combineLatest, debounceTime, distinctUntilChanged, map, Subject, takeUntil } from 'rxjs';
 import { loadProducts } from '../../store/products/products.actions';
 import {
   selectAllProducts,
@@ -172,13 +172,8 @@ export class ProductListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.store
-      .select(selectProductsLimit)
-      .pipe(take(1))
-      .subscribe((limit) => {
-        this.limit = limit;
-        this.reload(1);
-      });
+    this.limit = this.store.selectSignal(selectProductsLimit)();
+    this.reload(1);
 
     // Поиск по имени — с дебаунсом
     this.filterForm.controls.name.valueChanges

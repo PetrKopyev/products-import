@@ -5,10 +5,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { map, switchMap } from 'rxjs';
 import { ProductService } from '../../services/product.service';
+import { ImportService } from '../../services/import.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -20,6 +22,7 @@ import { ProductService } from '../../services/product.service';
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
+    MatProgressBarModule,
     MatProgressSpinnerModule,
     MatTableModule,
   ],
@@ -77,6 +80,37 @@ import { ProductService } from '../../services/product.service';
             } @else {
               <p class="text-muted">Атрибуты отсутствуют.</p>
             }
+
+            @if (job$ | async; as job) {
+              <h3 class="mt-16">Статус импорта</h3>
+              <p>
+                Задача #{{ job.id }} — <strong>{{ statusLabel(job.status) }}</strong>,
+                обработано {{ job.processed }} из {{ job.total }}
+              </p>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="job.total > 0 ? (job.processed / job.total) * 100 : 0"
+              />
+              @if (job.errors.length > 0) {
+                <p class="mt-16">Отчёт об ошибках ({{ job.errors.length }}):</p>
+                <table mat-table [dataSource]="job.errors" class="full-width">
+                  <ng-container matColumnDef="row">
+                    <th mat-header-cell *matHeaderCellDef>Строка</th>
+                    <td mat-cell *matCellDef="let element">{{ element.row }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="externalCode">
+                    <th mat-header-cell *matHeaderCellDef>Внешний код</th>
+                    <td mat-cell *matCellDef="let element">{{ element.externalCode ?? '—' }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="messages">
+                    <th mat-header-cell *matHeaderCellDef>Ошибки</th>
+                    <td mat-cell *matCellDef="let element">{{ element.messages.join('; ') }}</td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
+                </table>
+              }
+            }
           </mat-card-content>
         </mat-card>
       } @else {
@@ -128,6 +162,7 @@ import { ProductService } from '../../services/product.service';
 })
 export class ProductDetailComponent {
   protected readonly attributeColumns = ['key', 'value'];
+  protected readonly errorColumns = ['row', 'externalCode', 'messages'];
 
   protected readonly product$ = this.route.paramMap.pipe(
     map((params) => Number(params.get('id'))),
@@ -135,8 +170,22 @@ export class ProductDetailComponent {
     map((response) => response.data),
   );
 
+  /** Статус последней задачи импорта (прогресс + отчёт об ошибках) */
+  protected readonly job$ = this.importService.getLatest();
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly productService: ProductService,
+    private readonly importService: ImportService,
   ) {}
+
+  protected statusLabel(status: 'pending' | 'processing' | 'completed' | 'failed'): string {
+    const labels: Record<string, string> = {
+      pending: 'в очереди',
+      processing: 'обрабатывается',
+      completed: 'завершён',
+      failed: 'ошибка',
+    };
+    return labels[status] ?? status;
+  }
 }

@@ -117,6 +117,22 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/import/latest:
+    get:
+      tags: [import]
+      summary: Последняя задача импорта (прогресс + отчёт для карточки товара)
+      responses:
+        '200':
+          description: Последняя задача
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/ImportJob' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/import/{id}:
     get:
       tags: [import]

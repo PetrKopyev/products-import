@@ -27,6 +27,7 @@ return function (App $app): void {
     $app->group('/api', function (RouteCollectorProxy $group): void {
         $group->post('/import', [ImportController::class, 'upload'])
             ->add(RateLimitMiddleware::class);
+        $group->get('/import/latest', [ImportController::class, 'latest']);
         $group->get('/import/{id:[0-9]+}', [ImportController::class, 'status']);
         $group->get('/products', [ProductController::class, 'list']);
         $group->get('/products/{id:[0-9]+}', [ProductController::class, 'show']);

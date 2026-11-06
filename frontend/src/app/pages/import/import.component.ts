@@ -8,7 +8,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
+import { Subscription, interval, switchMap, takeWhile, throwError, timeout } from 'rxjs';
 import { ImportJob } from '../../models/import.model';
 import { ImportService } from '../../services/import.service';
 
@@ -159,6 +159,11 @@ export class ImportComponent {
               (job) => job.status === 'pending' || job.status === 'processing',
               true, // включительно: отдаём финальный статус
             ),
+            // страховка от бесконечного ожидания (worker недоступен и т.п.)
+            timeout({
+              first: 5 * 60 * 1000,
+              with: () => throwError(() => new Error('import-timeout')),
+            }),
           ),
         ),
       )
@@ -172,9 +177,11 @@ export class ImportComponent {
         error: (error: unknown) => {
           this.isRunning = false;
           const message =
-            error instanceof HttpErrorResponse && error.error?.message
-              ? error.error.message
-              : 'Ошибка импорта';
+            error instanceof Error && error.message === 'import-timeout'
+              ? 'Импорт занимает слишком много времени. Проверьте статус позже.'
+              : error instanceof HttpErrorResponse && error.error?.message
+                ? error.error.message
+                : 'Ошибка импорта';
           this.snackBar.open(message, 'Закрыть', { duration: 6000 });
         },
       });

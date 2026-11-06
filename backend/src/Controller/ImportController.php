@@ -76,6 +76,19 @@ final class ImportController
         return $this->json($response, ['data' => $job->toArray()]);
     }
 
+    /**
+     * GET /api/import/latest — последняя задача импорта (прогресс/отчёт для карточки товара).
+     */
+    public function latest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    {
+        $job = $this->jobs->findLatest();
+        if ($job === null) {
+            throw new ApiException('Задач импорта ещё не было', 404);
+        }
+
+        return $this->json($response, ['data' => $job->toArray()]);
+    }
+
     private function validateFile(UploadedFileInterface $file): void
     {
         $size = $file->getSize();

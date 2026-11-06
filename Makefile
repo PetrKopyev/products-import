@@ -28,7 +28,7 @@ seed: ## Запустить сидеры (в контейнере app)
 test: test-backend test-frontend ## Все тесты
 
 test-backend: ## PHPUnit: unit + integration + API/e2e (SQLite, синхронный транспорт)
-	cd $(BACKEND) && composer install --no-interaction && ./vendor/bin/phpunit
+	cd $(BACKEND) && composer install --no-interaction --ignore-platform-req=ext-amqp && ./vendor/bin/phpunit
 
 test-frontend: ## Сборка фронта как проверка
 	cd $(FRONTEND) && npm ci && npm run build

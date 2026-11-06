@@ -70,6 +70,17 @@ final class ProductsApiTest extends TestCase
         self::assertSame(2, $payload['meta']['total']);
     }
 
+    public function testFilterByNameIsCaseInsensitiveForCyrillic(): void
+    {
+        // SQLite LOWER() умеет только ASCII — «кружка» должна находить и «Кружка»
+        $response = $this->jsonRequest('GET', '/api/products?' . http_build_query(['name' => 'футболка']), null, [
+            'Authorization' => 'Bearer ' . $this->token,
+        ]);
+
+        $payload = $this->decode($response);
+        self::assertSame(2, $payload['meta']['total']);
+    }
+
     public function testFilterByPriceRange(): void
     {
         $response = $this->jsonRequest('GET', '/api/products?' . http_build_query([

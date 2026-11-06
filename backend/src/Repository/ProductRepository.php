@@ -61,8 +61,17 @@ final class ProductRepository
         }
 
         if (isset($filters['name']) && $filters['name'] !== '') {
-            $qb->andWhere('LOWER(p.name) LIKE LOWER(:name)')
-                ->setParameter('name', '%' . $filters['name'] . '%');
+            // Регистронезависимый поиск для любых языков: SQLite LOWER() умеет только латиницу,
+            // поэтому сравниваем с вариантами шаблона в разных регистрах
+            $pattern = $filters['name'];
+            $qb->andWhere(
+                'p.name LIKE :name_exact OR p.name LIKE :name_lower'
+                . ' OR p.name LIKE :name_upper OR p.name LIKE :name_title',
+            )
+                ->setParameter('name_exact', '%' . $pattern . '%')
+                ->setParameter('name_lower', '%' . mb_strtolower($pattern, 'UTF-8') . '%')
+                ->setParameter('name_upper', '%' . mb_strtoupper($pattern, 'UTF-8') . '%')
+                ->setParameter('name_title', '%' . mb_convert_case($pattern, MB_CASE_TITLE, 'UTF-8') . '%');
         }
 
         if (isset($filters['price_min'])) {

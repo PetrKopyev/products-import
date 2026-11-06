@@ -314,15 +314,23 @@ import { ImportService } from '../../services/import.service';
         font-weight: 600;
       }
       .copy-btn {
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
         margin-left: 2px;
+        line-height: normal;
       }
       .copy-btn mat-icon {
-        font-size: 17px;
-        width: 17px;
-        height: 17px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
         color: #0e7c86;
       }
       .price-line {

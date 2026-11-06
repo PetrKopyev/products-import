@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { combineLatest, debounceTime, distinctUntilChanged, map, Subject, takeUntil } from 'rxjs';
@@ -36,6 +37,7 @@ import { Product } from '../../models/product.model';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressBarModule,
     MatProgressSpinnerModule,
   ],
   template: `
@@ -65,13 +67,22 @@ import { Product } from '../../models/product.model';
           </form>
 
           @if (vm$ | async; as vm) {
-            @if (vm.loading) {
+            @if (vm.error) {
+              <p class="text-muted">Ошибка загрузки: {{ vm.error }}</p>
+            } @else if (vm.products.length === 0 && vm.loading) {
               <div class="loading-box">
                 <mat-spinner diameter="40" />
               </div>
-            } @else if (vm.error) {
-              <p class="text-muted">Ошибка загрузки: {{ vm.error }}</p>
             } @else {
+              <div class="table-wrap" [class.table-loading]="vm.loading">
+                @if (vm.loading) {
+                  <div class="table-progress">
+                    <mat-progress-bar mode="indeterminate" />
+                  </div>
+                }
+                @if (vm.products.length === 0) {
+                  <p class="empty-hint">По заданным фильтрам ничего не найдено.</p>
+                }
               <table mat-table [dataSource]="vm.products" class="full-width" data-cy="products-table">
                 <ng-container matColumnDef="image">
                   <th mat-header-cell *matHeaderCellDef></th>
@@ -121,6 +132,7 @@ import { Product } from '../../models/product.model';
                 (page)="onPage($event)"
                 showFirstLastButtons
               />
+              </div>
             }
           }
         </mat-card-content>
@@ -172,6 +184,26 @@ import { Product } from '../../models/product.model';
         display: flex;
         justify-content: center;
         padding: 40px 0;
+      }
+      /* Загрузка поверх таблицы — без «прыжка» вёрстки */
+      .table-wrap {
+        position: relative;
+      }
+      .table-loading {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+      .table-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+      }
+      .empty-hint {
+        padding: 24px 16px;
+        color: rgba(76, 88, 103, 0.75);
+        text-align: center;
       }
     `,
   ],

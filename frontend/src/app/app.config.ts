@@ -11,8 +11,28 @@ import { routes } from './app.routes';
 import { productsReducer } from './store/products/products.reducer';
 import { ProductsEffects } from './store/products/products.effects';
 import { authInterceptor } from './interceptors/auth.interceptor';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 
 registerLocaleData(localeRu);
+
+/** Русские подписи пагинатора */
+function ruPaginatorIntl(): MatPaginatorIntl {
+  const paginator = new MatPaginatorIntl();
+  paginator.itemsPerPageLabel = 'Товаров на странице:';
+  paginator.nextPageLabel = 'Следующая страница';
+  paginator.previousPageLabel = 'Предыдущая страница';
+  paginator.firstPageLabel = 'Первая страница';
+  paginator.lastPageLabel = 'Последняя страница';
+  paginator.getRangeLabel = (page: number, size: number, length: number): string => {
+    if (length === 0) {
+      return '0 из 0';
+    }
+    const start = page * size + 1;
+    const end = Math.min((page + 1) * size, length);
+    return `${start} – ${end} из ${length}`;
+  };
+  return paginator;
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,5 +43,6 @@ export const appConfig: ApplicationConfig = {
     provideStore({ products: productsReducer }),
     provideEffects(ProductsEffects),
     { provide: LOCALE_ID, useValue: 'ru' },
+    { provide: MatPaginatorIntl, useFactory: ruPaginatorIntl },
   ],
 };

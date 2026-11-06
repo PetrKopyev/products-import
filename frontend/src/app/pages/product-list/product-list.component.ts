@@ -256,6 +256,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
 
   clearFilters(): void {
     this.filterForm.reset({ name: '', priceMin: null, priceMax: null });
+    this.sort = '';
     this.reload(1);
   }
 

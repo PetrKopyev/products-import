@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { map, switchMap, tap } from 'rxjs';
 import { Product, ProductImage } from '../../models/product.model';
@@ -23,6 +24,7 @@ import { ImportService } from '../../services/import.service';
     MatIconModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     MatTableModule,
   ],
   template: `
@@ -36,7 +38,8 @@ import { ImportService } from '../../services/import.service';
               <div class="gallery">
                 <div class="gallery-main">
                   @if (mainSrc(product); as src) {
-                    <img [src]="src" [alt]="product.name" />
+                    <img class="gallery-bg" [src]="src" alt="" aria-hidden="true" />
+                    <img class="gallery-photo" [src]="src" [alt]="product.name" />
                   } @else {
                     <div class="gallery-empty">
                       <mat-icon>image</mat-icon>
@@ -81,7 +84,7 @@ import { ImportService } from '../../services/import.service';
                   <a
                     class="gallery-external"
                     mat-stroked-button
-                    [href]="image.url"
+                    [href]="secureUrl(image.url)"
                     target="_blank"
                     rel="noopener"
                   >
@@ -94,6 +97,15 @@ import { ImportService } from '../../services/import.service';
                 <h1 class="product-title">{{ product.name }}</h1>
                 <p class="product-code">
                   Внешний код: <span>{{ product.externalCode }}</span>
+                  <button
+                    mat-icon-button
+                    class="copy-btn"
+                    type="button"
+                    aria-label="Скопировать внешний код"
+                    (click)="copyCode(product.externalCode)"
+                  >
+                    <mat-icon>{{ copied ? 'check' : 'content_copy' }}</mat-icon>
+                  </button>
                 </p>
                 <p class="price-line">
                   <span class="price-value">{{ product.price | number: '1.2-2' }} ₽</span>
@@ -117,7 +129,18 @@ import { ImportService } from '../../services/import.service';
                 </ng-container>
                 <ng-container matColumnDef="value">
                   <th mat-header-cell *matHeaderCellDef>Значение</th>
-                  <td mat-cell *matCellDef="let attribute" class="attr-value">{{ attribute.value }}</td>
+                  <td mat-cell *matCellDef="let attribute" class="attr-value">
+                    @if (isUrl(attribute.value)) {
+                      <a
+                        class="attr-link"
+                        [href]="secureUrl(attribute.value)"
+                        target="_blank"
+                        rel="noopener"
+                      >{{ attribute.value }}</a>
+                    } @else {
+                      {{ attribute.value }}
+                    }
+                  </td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="attributeColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: attributeColumns"></tr>
@@ -187,7 +210,19 @@ import { ImportService } from '../../services/import.service';
         background: #ffffff;
         overflow: hidden;
       }
-      .gallery-main img {
+      /* Размытый фон выбранного фото вместо белых полос по бокам */
+      .gallery-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(28px) saturate(1.1);
+        transform: scale(1.25);
+        opacity: 0.55;
+      }
+      .gallery-photo {
+        position: relative;
         width: 100%;
         height: 100%;
         object-fit: contain;
@@ -270,10 +305,25 @@ import { ImportService } from '../../services/import.service';
       .product-code {
         margin: 0 0 16px;
         color: rgba(76, 88, 103, 0.75);
+        display: flex;
+        align-items: center;
+        gap: 2px;
       }
       .product-code span {
         color: #313b48;
         font-weight: 600;
+      }
+      .copy-btn {
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        margin-left: 2px;
+      }
+      .copy-btn mat-icon {
+        font-size: 17px;
+        width: 17px;
+        height: 17px;
+        color: #0e7c86;
       }
       .price-line {
         display: flex;
@@ -287,6 +337,20 @@ import { ImportService } from '../../services/import.service';
         font-size: 30px;
         font-weight: 700;
         color: #313b48;
+        line-height: 1;
+      }
+      .price-line .discount-badge {
+        align-self: center;
+      }
+      .attr-link {
+        color: #0e7c86;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        word-break: break-all;
+      }
+      .attr-link:hover {
+        text-decoration: underline;
       }
       .description {
         white-space: pre-line;
@@ -317,6 +381,9 @@ export class ProductDetailComponent {
   protected readonly errorColumns = ['row', 'externalCode', 'messages'];
 
   protected activeIndex = 0;
+  protected copied = false;
+
+  private copyReset: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly product$ = this.route.paramMap.pipe(
     map((params) => Number(params.get('id'))),
@@ -334,7 +401,30 @@ export class ProductDetailComponent {
     private readonly route: ActivatedRoute,
     private readonly productService: ProductService,
     private readonly importService: ImportService,
+    private readonly snackBar: MatSnackBar,
   ) {}
+
+  protected copyCode(code: string): void {
+    void navigator.clipboard.writeText(code).then(() => {
+      this.copied = true;
+      this.snackBar.open('Внешний код скопирован', 'Закрыть', { duration: 2000 });
+      if (this.copyReset !== null) {
+        clearTimeout(this.copyReset);
+      }
+      this.copyReset = setTimeout(() => {
+        this.copied = false;
+      }, 2000);
+    });
+  }
+
+  protected isUrl(value: string): boolean {
+    return /^https?:\/\/\S+$/i.test(value);
+  }
+
+  /** http → https: часть сайтов (например, catalog.collant.ru) гонит HSTS и браузер блокирует http-переходы */
+  protected secureUrl(url: string): string {
+    return url.replace(/^http:\/\//i, 'https://');
+  }
 
   /** Локальные изображения, доступные для просмотра в галерее */
   protected localSources(product: Product): string[] {

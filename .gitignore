@@ -7,6 +7,7 @@ backend/.phpunit.cache/
 backend/.php-cs-fixer.cache
 backend/phpstan.cache/
 backend/storage/
+backend/public/storage/
 backend/composer.phar
 
 # Frontend

@@ -1,0 +1,182 @@
+@use '@angular/material' as mat;
+
+/*
+ * Тема в фирменном стиле Sherpa RPA (sherparpa.ru):
+ * основной бирюзовый #30afb8, яркий голубой #38b0df, глубокий синий #006c97,
+ * тёмный сланец #313b48, шрифты Montserrat (заголовки) + Inter (текст).
+ */
+html {
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$cyan-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: (
+        plain-family: 'Inter',
+        brand-family: 'Montserrat',
+      ),
+      density: 0,
+    )
+  );
+}
+
+/* Фирменные цвета поверх M3-токенов Material */
+:root {
+  --mat-sys-primary: #30afb8;
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #c9edf0;
+  --mat-sys-on-primary-container: #0b3f44;
+
+  --mat-sys-secondary: #38b0df;
+  --mat-sys-on-secondary: #ffffff;
+  --mat-sys-secondary-container: #d3eefb;
+  --mat-sys-on-secondary-container: #083344;
+
+  --mat-sys-tertiary: #006c97;
+  --mat-sys-on-tertiary: #ffffff;
+  --mat-sys-tertiary-container: #c8e6f5;
+  --mat-sys-on-tertiary-container: #00293a;
+
+  --mat-sys-background: #f4f7f9;
+  --mat-sys-on-background: #313b48;
+  --mat-sys-surface: #ffffff;
+  --mat-sys-surface-container-low: #fafcfd;
+  --mat-sys-surface-container: #f4f7f9;
+  --mat-sys-surface-container-high: #ecf1f4;
+  --mat-sys-on-surface: #313b48;
+  --mat-sys-on-surface-variant: #4c5867;
+  --mat-sys-outline: #c5cdd6;
+  --mat-sys-outline-variant: #dde4ea;
+
+  --mat-sys-error: #d64541;
+  --mat-sys-on-error: #ffffff;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Roboto, 'Helvetica Neue', sans-serif;
+  background: #f4f7f9;
+  color: #313b48;
+}
+
+/* Заголовки — Montserrat, как на сайте Sherpa */
+h1,
+h2,
+h3,
+.mat-typography h1,
+.mat-typography h2,
+.mat-typography h3,
+mat-card-title {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  color: #313b48;
+}
+
+/* Карточки — мягкие скругления и тень */
+mat-card,
+.mat-mdc-card {
+  border-radius: 16px !important;
+  box-shadow: 0 2px 12px rgba(49, 59, 72, 0.08) !important;
+}
+
+/* Кнопки — фирменный бирюзовый градиентный акцент */
+.mat-mdc-raised-button,
+.mat-mdc-flat-button,
+.mat-mdc-unelevated-button {
+  border-radius: 10px !important;
+  font-weight: 600;
+}
+
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-flat-button.mat-primary {
+  background: linear-gradient(135deg, #30afb8 0%, #38b0df 100%) !important;
+}
+
+.mat-mdc-unelevated-button.mat-primary:hover,
+.mat-mdc-raised-button.mat-primary:hover,
+.mat-mdc-flat-button.mat-primary:hover {
+  background: linear-gradient(135deg, #2299a1 0%, #2ea3d4 100%) !important;
+}
+
+/* Тулбар — белый, как шапка сайта */
+mat-toolbar.mat-primary {
+  background: #ffffff !important;
+  color: #313b48 !important;
+  border-bottom: 1px solid #e3e9ee;
+  box-shadow: 0 1px 4px rgba(49, 59, 72, 0.06);
+}
+
+mat-toolbar.mat-primary a,
+mat-toolbar.mat-primary button {
+  color: #4c5867 !important;
+  border-radius: 10px;
+}
+
+mat-toolbar.mat-primary a.active {
+  background: #c9edf0 !important;
+  color: #0b3f44 !important;
+}
+
+/* Прогресс-бары — градиент Sherpa */
+mat-progress-bar {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Пагинация — округлёные контролы */
+.mat-mdc-paginator {
+  border-radius: 0 0 16px 16px;
+  background: transparent;
+}
+
+/* Утилиты страниц */
+.page-container {
+  max-width: 1100px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.filter-form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: rgba(48, 175, 184, 0.07);
+}
+
+.product-images img {
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid #dde4ea;
+}
+
+.error-report {
+  margin-top: 24px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.text-muted {
+  color: rgba(76, 88, 103, 0.75);
+}
